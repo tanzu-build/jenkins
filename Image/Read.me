@@ -1,0 +1,14 @@
+Run:
+export DOCKER_DEFAULT_PLATFORM=linux/amd64
+
+docker build -f ./Dockerfile-jnlp -t marygabry1508/jnlp-inbound-agent:latest-jdk17
+docker build -t marygabry1508/jnlp-inbound-agent:latest-jdk17 - <Dockerfile-jnlp 
+docker push marygabry1508/jnlp-inbound-agent:latest-jdk17
+
+docker build . -t marygabry1508/docker:dind-tanzu-build
+docker push marygabry1508/docker:dind-tanzu-build
+
+docker build -f ./Dockerfile-nerdctl -t marygabry1508/docker:nerdctl-tanzu-build
+docker build -t marygabry1508/docker:nerdctl-tanzu-build - <Dockerfile-nerdctl 
+docker tag ... marygabry1508/docker:nerdctl-tanzu-build    
+docker push marygabry1508/docker:nerdctl-tanzu-build
