@@ -12,7 +12,7 @@ Jenkins should be installed and running in`jenkins` namespace and:
 ## How to use
 
 1. build the images for the agent to run `tanzu cli`:
-- if using self signed certificates for your registry add the ca to the stack of your builder (link here) 
+- if using self signed certificates for your registry add the Custom CA to the stack of your builder 
 - build and push the image for the DIND with `tanzu cli`, change <YOUR REGISTRY> to match the registry to push the image to:
 ```
 cd Image
@@ -42,3 +42,5 @@ cd ..
 ![Jenkins SCM pipleine](png/pipeline.png)
 
 ![Jenkins SCM pipleine](png/SCMpipeline.png)
+
+## NOTE: tanzu deploy is work in progress and coming soon!!!
