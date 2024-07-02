@@ -7,11 +7,11 @@ pipeline {
         spec:
           containers:
           - name: jnlp
-            image: marygabry1508/jnlp-inbound-agent:latest-jdk17
+            image: jenkins/inbound-agent:latest-jdk17
             args: ["-noCertificateCheck"]
             imagePullPolicy: IfNotPresent # Always
           - name: docker
-            image: marygabry1508/docker:dind-tanzu-build
+            image: <YOUR REGISTRY>/docker:dind-tanzu-build
             imagePullPolicy: IfNotPresent # Always
             securityContext:
               privileged: true
