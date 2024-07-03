@@ -11,7 +11,7 @@ pipeline {
             args: ["-noCertificateCheck"]
             imagePullPolicy: IfNotPresent # Always
           - name: docker
-            image: marygabry1508/docker:dind-tanzu-build
+            image: <YOUR REGISTRY>/docker:dind-tanzu-build
             imagePullPolicy: IfNotPresent # Always
             securityContext:
               privileged: true
@@ -95,23 +95,9 @@ pipeline {
                 branches: [[name: params.BRANCH]],
                 userRemoteConfigs: [[url: newGitRepo, credentialsId: GIT_CREDENTIALS_ID]]
               ])
-            }
-          }
-        }
-      }
-    }
-    
-    stage('Commit Changes') {
-      steps {
-        container('docker') {
-          script {
-            withCredentials([string(credentialsId: GIT_CREDENTIALS_ID, variable: 'GIT_TOKEN')]) {
-              def newGitRepo = params.GITREPO.replace('https://', "https://${GIT_TOKEN}@").replaceAll(/(\.git)$/, '-ops$1')
-              sh 'git status'
+              sh 'git config --global --add safe.directory /home/jenkins/agent/workspace/testd'
               sh 'git config user.email jenkis@test.com'
               sh 'git config user.name Jenkins'
-              sh "git clone ${newGitRepo}"
-              sh "git checkout ${params.BRANCH.substring(2)}"
               sh 'cp -r /tmp/tanzu/. .'
               sh 'ls -al'
               sh 'git add .'
