@@ -45,3 +45,6 @@ cd ..
 ![Jenkins SCM pipleine](png/SCMpipeline.png)
 
 ## NOTE: tanzu deploy is work in progress and coming soon!!!
+## TODO:
+- Add instructions for Jenkins installation
+- Add instructions to add Custom CA to builder
