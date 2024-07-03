@@ -11,7 +11,7 @@ pipeline {
             args: ["-noCertificateCheck"]
             imagePullPolicy: IfNotPresent # Always
           - name: docker
-            image: <YOUR REGISTRY>/docker:dind-tanzu-build
+            image: marygabry1508/docker:dind-tanzu-build
             imagePullPolicy: IfNotPresent # Always
             securityContext:
               privileged: true
@@ -96,8 +96,6 @@ pipeline {
                 userRemoteConfigs: [[url: newGitRepo, credentialsId: GIT_CREDENTIALS_ID]]
               ])
             }
-            sh 'cp -r /tmp/tanzu/. .'
-            sh 'ls -al'
           }
         }
       }
@@ -115,6 +113,7 @@ pipeline {
               sh "git clone ${newGitRepo}"
               sh "git checkout ${params.BRANCH.substring(2)}"
               sh 'cp -r /tmp/tanzu/. .'
+              sh 'ls -al'
               sh 'git add .'
               sh 'git commit -m "Automated commit by Jenkins pipeline"'
               sh "git push origin ${params.BRANCH}"
