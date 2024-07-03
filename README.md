@@ -35,8 +35,8 @@ cd ..
 ![Jenkins parameters](png/params.png)
 
 4. Edit `Jenkinsfile-dind-tanzu-build`:
-- change <YOUR REGISTRY> to your registry 
-- change default values to your own defaults
+- change <YOUR REGISTRY> to match the registry that contains the doker+tanzu-cli image built at step 1.
+- change default values to match your own defaults
 
 5. configure an SCM pipeline
 
