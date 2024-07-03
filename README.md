@@ -1,9 +1,10 @@
 # `tanzu build` & `tanzu deploy` with Jenkins on k8s 
 
 This repository contains:
-- Docker file to build a dind 
-- a couple of jenkins pipelined that use `tanzu cli` to build and deploy artifacts.
+- a Docker file to build a dind container with `tanzu cli`
+- a jenkins pipeline that use `tanzu cli` to build and deploy artifacts.
 
+Assumption:
 Jenkins should be installed and running in`jenkins` namespace and:
 - is configured to access the images referenced in `Jenkinsfile-dind-tanzu-build`
 - Pipeline, Kubernetes and Credentials plugins are installed and configured
