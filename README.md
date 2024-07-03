@@ -10,7 +10,7 @@ Jenkins should be installed and running in`jenkins` namespace and:
 - Pipeline, Kubernetes and Credentials plugins are installed and configured
 - Credentials are configured to access Registries and Repositories (see later) 
 
-## How to use
+## How to use (`tanzu build`)
 
 1. build the images for the agent to run `tanzu cli`:
 - if using self signed certificates for your registry add the Custom CA to the stack of your builder 
@@ -24,7 +24,7 @@ docker build . -t <YOUR REGISTRY>/docker:dind-tanzu-build
 docker push <YOUR REGISTRY>/docker:dind-tanzu-build
 cd ..
 ```
-2. create a volume claim to cache layers bewteen runs. Edit k8s/pvc.yaml and change <YOUR STORAGE CLASS> with the name eof the storage class, then connect to your k8s cluster running Jenkins and craet ethe pvc:
+2. create a volume claim to cache layers bewteen runs. Edit k8s/pvc.yaml and change <YOUR STORAGE CLASS> with the name of the storage class, then connect to your k8s cluster running Jenkins and create the pvc:
  ```
 cd k8s
 kubectl apply -f pvc.yaml
@@ -44,7 +44,7 @@ cd ..
 
 ![Jenkins SCM pipleine](png/SCMpipeline.png)
 
-## NOTE: tanzu deploy is work in progress and coming soon!!!
+## NOTE: `tanzu deploy` is work in progress and coming soon!!!
 ## TODO:
 - Add instructions for Jenkins installation
 - Add instructions to add Custom CA to builder
