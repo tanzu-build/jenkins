@@ -1,0 +1,80 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  creationTimestamp: null
+  name: java-rest-service
+spec:
+  revisionHistoryLimit: 1
+  selector:
+    matchLabels:
+      containerapp.apps.tanzu.vmware.com/app-name: java-rest-service
+  strategy:
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 10%
+    type: RollingUpdate
+  template:
+    metadata:
+      annotations:
+        containerapp.apps.tanzu.vmware.com/content-summary: git:a8eb347 @ 2024-06-28T20:36:15Z
+      creationTimestamp: null
+      labels:
+        containerapp.apps.tanzu.vmware.com/app-name: java-rest-service
+    spec:
+      automountServiceAccountToken: false
+      containers:
+      - image: marygabry1508/java-rest-service@sha256:e4a3c1fe91ee7be2a092ffc63c013dc1e9c39200558e6612c1360004a99964b4
+        imagePullPolicy: IfNotPresent
+        name: workload
+        ports:
+        - containerPort: 8080
+          name: main
+          protocol: TCP
+        resources:
+          limits:
+            memory: 1Gi
+          requests:
+            cpu: 300m
+            memory: 1Gi
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+          privileged: false
+          readOnlyRootFilesystem: true
+          runAsNonRoot: true
+          seccompProfile:
+            type: RuntimeDefault
+        volumeMounts:
+        - mountPath: /tmp
+          name: tanzu-tmp
+      enableServiceLinks: false
+      restartPolicy: Always
+      securityContext:
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
+      serviceAccountName: java-rest-service
+      terminationGracePeriodSeconds: 300
+      topologySpreadConstraints:
+      - labelSelector:
+          matchLabels:
+            containerapp.apps.tanzu.vmware.com/app-name: java-rest-service
+        matchLabelKeys:
+        - pod-template-hash
+        maxSkew: 1
+        topologyKey: topology.kubernetes.io/zone
+        whenUnsatisfiable: ScheduleAnyway
+      - labelSelector:
+          matchLabels:
+            containerapp.apps.tanzu.vmware.com/app-name: java-rest-service
+        matchLabelKeys:
+        - pod-template-hash
+        maxSkew: 1
+        topologyKey: topology.kubernetes.io/hostname
+        whenUnsatisfiable: ScheduleAnyway
+      volumes:
+      - emptyDir: {}
+        name: tanzu-tmp
+status: {}

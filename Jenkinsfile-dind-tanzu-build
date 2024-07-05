@@ -99,7 +99,7 @@ pipeline {
               sh 'git config user.email jenkis@test.com'
               sh 'git config user.name Jenkins'
               sh 'cp -r /tmp/tanzu/. .'
-              sh 'ls -al'
+              sh 'git status'
               sh 'git add .'
               sh 'git commit -m "Automated commit by Jenkins pipeline"'
               sh "git push origin ${params.BRANCH}"
