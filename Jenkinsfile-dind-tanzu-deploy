@@ -30,7 +30,7 @@ pipeline {
   }
   parameters {
     string(name: 'GITREPO', defaultValue: 'https://github.com/tanzu-build/tanzu-build-samples.git')
-    string(name: 'BRANCH', defaultValue: '*/build')
+    string(name: 'BRANCH', defaultValue: '*/main')
     string(name: 'DOCKER_CREDENTIALS_ID', defaultValue: 'mgbdocker')
     string(name: 'GIT_CREDENTIALS_ID', defaultValue: 'mgb-git-tanzu-build')
     string(name: 'CONFIG_FILE' , defaultValue: './platform-config.yaml')
@@ -81,14 +81,14 @@ pipeline {
         }
       }     
     }
-    // stage('Build') {
-    //   steps {
-    //     container('docker') {
-    //       // Build with the cli
-    //       sh 'tanzu build --output-dir /tmp/tanzu'
-    //     }
-    //   }
-    // }
+    stage('Build') {
+      steps {
+        container('docker') {
+          // Build with the cli
+          sh 'tanzu deploy'
+        }
+      }
+    }
 
     // stage('Cloning GitOps Repo') {
     //   steps {
