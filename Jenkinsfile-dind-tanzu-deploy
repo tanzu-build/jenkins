@@ -11,7 +11,7 @@ pipeline {
             args: ["-noCertificateCheck"]
             imagePullPolicy: IfNotPresent # Always
           - name: docker
-            image: <YOUR REGISTRY>/docker:dind-tanzu-build
+            image: marygabry1508/docker:dind-tanzu-build
             imagePullPolicy: IfNotPresent # Always
             securityContext:
               privileged: true
