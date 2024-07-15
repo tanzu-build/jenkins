@@ -19,5 +19,6 @@ This repository contains:
 [`tanzu build`](https://github.com/tanzu-build/jenkins/blob/main/TanzuBuild.md)
 
 ## TODO:
+- Attach a webhook from repo
 - Add instructions to add Custom CA to builder
 - Add support other than Docker registry
