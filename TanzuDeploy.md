@@ -15,4 +15,6 @@
 
 ![Jenkins SCM pipleine](png/SCMpipelineb.png)
 
-4. Follow instruction to obtain API Token and configure your space in TPk8s following ## Prerequisites in https://github.com/cpage-pivotal/tanzu-deploy-action
+4. Follow instruction to obtain API Token and configure your space in TPk8s following the
+   ## Prerequisites
+   in https://github.com/cpage-pivotal/tanzu-deploy-action
