@@ -1,6 +1,6 @@
 pipeline {
   agent {
-    kubernetes {
+    kubernetes { // This entire `kubernetes` section should be removed if Jenkins is running on VMs
       yaml '''
         apiVersion: v1
         kind: Pod
@@ -29,11 +29,11 @@ pipeline {
     }
   }
   parameters {
-    string(name: 'GITREPO', defaultValue: 'https://github.com/tanzu-build/tanzu-build-samples.git')
-    string(name: 'BRANCH', defaultValue: '*/main')
-    string(name: 'DOCKER_CREDENTIALS_ID', defaultValue: 'mgbdocker')
-    string(name: 'GIT_CREDENTIALS_ID', defaultValue: 'mgb-git-tanzu-build')
-    string(name: 'CONFIG_FILE' , defaultValue: './platform-config.yaml')
+    string(name: 'GITREPO', defaultValue: 'https://github.com/tanzu-build/tanzu-build-samples.git') // Git repo to build
+    string(name: 'BRANCH', defaultValue: '*/main') // Branch of the Git repo to build
+    string(name: 'GIT_CREDENTIALS_ID', defaultValue: 'mgb-git-tanzu-build') // Credentials for the Git repo to build
+    string(name: 'DOCKER_CREDENTIALS_ID', defaultValue: 'mgbdocker') // Docker Registry for containers artifacts
+    string(name: 'CONFIG_FILE' , defaultValue: './platform-config.yaml') // Local plan 
   }
   environment {
       TARGET_FILE = '/root/.config/tanzu/build/config.yaml'
