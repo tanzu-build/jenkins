@@ -1,0 +1,101 @@
+pipeline {
+  agent {
+    kubernetes {
+      yaml '''
+        apiVersion: v1
+        kind: Pod
+        spec:
+          containers:
+          - name: jnlp
+            image: jenkins/inbound-agent:latest-jdk17
+            args: ["-noCertificateCheck"]
+            imagePullPolicy: IfNotPresent # Always
+          - name: docker
+            image: marygabry1508/docker:dind-tanzu-build
+            imagePullPolicy: IfNotPresent # Always
+            securityContext:
+              privileged: true
+            env:
+            - name: DOCKER_TLS_CERTDIR
+              value: ""
+            volumeMounts:
+            - name: docker-graph-storage
+              mountPath: /var/lib/docker
+          volumes:
+          - name: docker-graph-storage
+            persistentVolumeClaim:
+              claimName: docker-claim
+        '''
+    }
+  }
+  parameters {
+    string(name: 'GITREPO', defaultValue: 'https://github.com/tanzu-build/tanzu-build-samples.git')
+    string(name: 'BRANCH', defaultValue: '*/main')
+    string(name: 'DOCKER_CREDENTIALS_ID', defaultValue: 'mgbdocker')
+    string(name: 'GIT_CREDENTIALS_ID', defaultValue: 'mgb-git-tanzu-build')
+    string(name: 'CONFIG_FILE' , defaultValue: './platform-config.yaml')
+    string(name: 'PROJECT' , defaultValue: 'ne-growth')  
+    string(name: 'SPACE' , defaultValue: 'gabry')        
+    string(name: 'TANZU_API_TOKEN' , defaultValue: 'Tanzu_Platform_for_K8s_SaaS_-_Internal_1_APItoken') 
+    string(name: 'BUILD_PLAN_SOURCE' , defaultValue: 'simple.tanzu.vmware.com') 
+    string(name: 'REGISTRY_NAME' , defaultValue: 'registry-name') 
+  }
+  environment {
+      TARGET_FILE = '/root/.config/tanzu/build/config.yaml'
+  }
+  stages {
+    stage('Cloning Git Application Repo') {
+      steps {
+        container('docker') {
+          script {
+            withCredentials([string(credentialsId: GIT_CREDENTIALS_ID, variable: 'GIT_TOKEN')]) {
+              def repoUrl = params.GITREPO.replace('https://', "https://${GIT_TOKEN}@")
+              checkout([
+                  $class: 'GitSCM',
+                  branches: [[name: params.BRANCH]],
+                  userRemoteConfigs: [[url: repoUrl, credentialsId: GIT_CREDENTIALS_ID]]
+              ])
+            }
+          }
+        }
+      }
+    }
+    stage('Login to Docker Registry') {
+      steps {
+        container('docker') {
+          withCredentials([usernamePassword(credentialsId: DOCKER_CREDENTIALS_ID, usernameVariable: 'DOCKER_USERNAME', passwordVariable: 'DOCKER_PASSWORD')]) {
+            withCredentials([string(credentialsId: REGISTRY_NAME, variable: 'REGISTRY_NAME')]) {
+                sh('docker $REGISTRY_NAME login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD')
+            }
+          }
+        }
+      }
+    }
+    stage('Configure Build Environment') {
+      steps {
+        container('docker') {
+          script {
+            // Extract the registry value from config.yaml
+            // def REGISTRY_VALUE = sh(script: "grep 'registry:' ${CONFIG_FILE} | awk '{print \$2}'", returnStdout: true).trim()  
+            withCredentials([string(credentialsId: REGISTRY_NAME, variable: 'REGISTRY')]) {
+              sh "tanzu build config --build-plan-source-type=ucp --containerapp-registry ${REGISTRY}/{name} --build-plan-source ${params.BUILD_PLAN_SOURCE}"
+            }
+            withCredentials([string(credentialsId: TANZU_API_TOKEN, variable: 'TANZU_API_TOKEN_API')]) {
+              sh "TANZU_API_TOKEN=$TANZU_API_TOKEN_API tanzu login"
+            }
+            sh "tanzu project use ${params.PROJECT}" 
+            sh "tanzu space use ${params.SPACE}"           
+          }
+        }
+      }     
+    }
+    stage('Build') {
+      steps {
+        container('docker') {
+          // Build with the cli
+          sh 'tanzu deploy -y'
+        }
+      }
+    }
+  }
+}
