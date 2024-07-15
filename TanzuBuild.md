@@ -1,6 +1,6 @@
 ## How to use (`tanzu build`)
 
-1. create a pipeline with the following parameters (GIT_CREDENTIALS_ID contains a token)
+1. Create a pipeline with the following parameters (GIT_CREDENTIALS_ID contains a token)
 
 ![Jenkins parameters](png/params.png)
 
@@ -13,3 +13,12 @@
 ![Jenkins SCM pipleine](png/pipeline.png)
 
 ![Jenkins SCM pipleine](png/SCMpipeline.png)
+
+4. Create a GitOps repository to host the deployment rtifacts using the same nme of the one that contains the source code and adding `-ops:
+   if the source code is stored in:
+   `https://github.com/tanzu-build/tanzu-build-samples`
+   create:
+   `https://github.com/tanzu-build/tanzu-build-samples-ops`
+
+   OR remove the last step of the pipeline.
+
