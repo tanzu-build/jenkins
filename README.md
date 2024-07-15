@@ -1,5 +1,7 @@
 # `tanzu build` & `tanzu deploy` with Jenkins on k8s 
 
+Check [here](https://docs.google.com/presentation/d/12820dr15lKBuKcb2mxg8EvMKa4WNY0lhOTKF0uIIR4A/edit?usp=sharing) for more context and material.
+
 ## About
 
 This repository contains:
