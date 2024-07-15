@@ -1,6 +1,6 @@
 ## How to use (`tanzu build`)
 
-1. Create a pipeline with the following parameters (GIT_CREDENTIALS_ID contains a token)
+1. Create a pipeline with the following parameters (GIT_CREDENTIALS_ID, REGISTRY_NAME, REGISTRY_CREDENTIALS_ID, TANZU_API_TOKEN references Credentials IDs in jenkis)
 
 ![Jenkins SCM pipleine](png/pipelineb.png)
 
