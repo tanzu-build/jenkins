@@ -1,4 +1,13 @@
 # `tanzu build` & `tanzu deploy` with Jenkins on k8s 
+## Benefits
+
+- Drives consistency and security
+- Accelerates Dev Velocity / Reduces Developer toil 
+- Get started quickly with minimal prerequisites 
+- Builds and packages your app as an OCI compliant image with all it’s dependencies
+- Creates the YAML needed to deploy your app
+- Creates SBOM artifacts for your app’s dependencies
+- Easily integrates with existing CI/CD tooling
 
 Check [here](https://docs.google.com/presentation/d/12820dr15lKBuKcb2mxg8EvMKa4WNY0lhOTKF0uIIR4A/edit?usp=sharing) for more context and material.
 
