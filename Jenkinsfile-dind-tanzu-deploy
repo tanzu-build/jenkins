@@ -1,6 +1,6 @@
 pipeline {
   agent {
-    kubernetes {
+    kubernetes { // This entire `kubernetes` section should be removed if Jenkins is running on VMs
       yaml '''
         apiVersion: v1
         kind: Pod
