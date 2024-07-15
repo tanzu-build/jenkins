@@ -2,7 +2,7 @@
 
 1. Create a pipeline with the following parameters (GIT_CREDENTIALS_ID contains a token)
 
-![Jenkins parameters](png/params.png)
+![Jenkins SCM pipleine](png/pipelineb.png)
 
 2. Edit `Jenkinsfile-dind-tanzu-deploy`:
   If running on k8s
@@ -12,8 +12,6 @@
 - change default values to match your own defaults
 
 3. configure an SCM pipeline
-
-![Jenkins SCM pipleine](png/pipelineb.png)
 
 ![Jenkins SCM pipleine](png/SCMpipelineb.png)
 
