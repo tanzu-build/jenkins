@@ -4,7 +4,8 @@
 
 This repository contains:
 - a Docker file to build a dind container with `tanzu cli` in case Jenkis is deployed on a k8s cluster
-- a jenkins pipeline that use `tanzu cli` to build and deploy artifacts
+- jenkins pipelines that use `tanzu cli` to build and deploy artifacts
+Note: pipelines use doker registry today by default.
 
 ## Prerequisites
 [Jenkins](https://github.com/tanzu-build/jenkins/blob/main/Jenkins.md) installed and running:
@@ -19,6 +20,7 @@ This repository contains:
 [`tanzu build`](https://github.com/tanzu-build/jenkins/blob/main/TanzuBuild.md)
 
 ## TODO:
-- Attach a webhook from repo
-- Add instructions to add Custom CA to builder
+- Add instructions on how to trigger the pipleine through a webhook from repo
 - Add support other than Docker registry
+- Add instructions to add Custom CA to builder
+
