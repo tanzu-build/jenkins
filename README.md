@@ -5,6 +5,7 @@
 This repository contains:
 - a Docker file to build a dind container with `tanzu cli` in case Jenkis is deployed on a k8s cluster
 - jenkins pipelines that use `tanzu cli` to build and deploy artifacts
+
 Note: pipelines use doker registry today by default.
 
 ## Prerequisites
