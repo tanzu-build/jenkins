@@ -7,7 +7,7 @@ This repository contains:
 - a jenkins pipeline that use `tanzu cli` to build and deploy artifacts
 
 ## Prerequisites
-[Jenkins](https;//github.com/tanzu-build/jenkins/blob/main/Jenkins.md) installed and running:
+[Jenkins](https://github.com/tanzu-build/jenkins/blob/main/Jenkins.md) installed and running:
 - is configured to access the images referenced in `Jenkinsfile-dind-tanzu-build`
 - Pipeline, Kubernetes and Credentials plugins are installed and configured
 - Credentials are configured to access Registries and Repositories  
