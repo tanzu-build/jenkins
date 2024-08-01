@@ -1,0 +1,112 @@
+pipeline {
+  agent {
+    kubernetes {
+      yaml '''
+        apiVersion: v1
+        kind: Pod
+        spec:
+          containers:
+          - name: jnlp
+            image: jenkins/inbound-agent:latest-jdk17
+            args: ["-noCertificateCheck"]
+            imagePullPolicy: Always # Always IfNotPresent
+            securityContext:
+              allowPrivilegeEscalation: false
+              capabilities:
+                drop: ["ALL"]
+              runAsNonRoot: true
+              runAsUser: 1000
+              fsGroup: 1000 # Default group ID for Jenkins
+              seccompProfile:
+                type: RuntimeDefault
+          - name: advisor
+            image: marygabry1508/advisor:java17
+            imagePullPolicy: Always # Always IfNotPresent
+            volumeMounts:
+            - name: maven-cache
+              mountPath: /home/jenkins/agent/.m2/repository
+            securityContext:
+              allowPrivilegeEscalation: false
+              capabilities:
+                drop: ["ALL"]
+              runAsNonRoot: true
+              runAsUser: 1000
+              fsGroup: 1000 # Default group ID for Jenkins
+              seccompProfile:
+                type: RuntimeDefault
+          volumes:
+          - name: maven-cache
+            persistentVolumeClaim:
+              claimName: maven-cache
+        '''
+    }
+  }
+  parameters {
+    string(name: 'GITREPO', defaultValue: 'https://gitlab.eng.vmware.com/tanzu-ne-growth/app-advisor-pet-clinic.git') // Git repo to build
+    string(name: 'BRANCH', defaultValue: 'finra-advisor') // Branch of the Git repo to build
+    string(name: 'GIT_CREDENTIALS_ID', defaultValue: 'mgb-git-tanzu-build') // Credentials for the Git repo to build
+    string(name: 'REGISTRY_NAME' , defaultValue: 'registry-name') // Docker Registry for containers artifacts
+    string(name: 'REGISTRY_CREDENTIALS_ID', defaultValue: 'mgbdocker') // Docker Registry Creds for containers artifacts
+    string(name: 'ADVISOR_SERVER', defaultValue: 'http://10.220.43.71:8080/') // Advisor server url
+    string(name: 'TOOL', defaultValue: 'gradlew') // java tool
+  }
+  environment {
+    MAVEN_OPTS = '-Dmaven.repo.local=/home/jenkins/agent/.m2/repository'
+  }
+  triggers {
+    GenericTrigger(
+      genericVariables: [
+        [key: 'GITREPO', value: '$.repository.git_http_url'],
+        [key: 'BRANCH', value: '$.ref']
+      ],
+      causeString: 'Triggered on $GITREPO',
+      token: 'gitlab-basic-finra-advisor', // Optional security token
+      printContributedVariables: true,
+      printPostContent: true,
+      regexpFilterText: '',
+      regexpFilterExpression: ''
+    )
+  }
+
+  stages {
+    stage('Cloning Git Application Repo') {
+      steps {
+        container('advisor') {
+          script {
+            env.PREFIX =""
+            if (env.GITREPO.startsWith('https://gitlab')) { // Webhook from GITLAB
+              env.BRANCH = branch.replaceAll('refs/heads/', '') // GitLab sends branch as refs/heads/branch
+              env.PREFIX = env.GITREPO.split('/').last().replace('.git', '') + ":"
+              GIT_CREDENTIALS_ID=GIT_CREDENTIALS_ID.replace('git-', "gitlab-")
+            } 
+            withCredentials([string(credentialsId: GIT_CREDENTIALS_ID, variable: 'GIT_TOKEN')]) {
+              def repoUrl = params.GITREPO.replace('https://', "https://${env.PREFIX}${GIT_TOKEN}@")
+              checkout([
+                  $class: 'GitSCM',
+                  branches: [[name: params.BRANCH]],
+                  userRemoteConfigs: [[url: repoUrl, credentialsId: GIT_CREDENTIALS_ID]]
+              ])
+            }
+          }        
+        }
+      }
+    }
+    stage('Run Advisor') {
+      steps {
+        container('advisor') {
+          script {
+            sh "git checkout ${env.BRANCH}"
+            sh "advisor build-config get --build-tool=${params.TOOL}"
+            sh 'advisor build-config publish --url=$ADVISOR_SERVER'
+            sh 'git config --global --add safe.directory $WORKSPACE'
+            sh 'git config user.email jenkins@test.com'
+            sh 'git config user.name Jenkins'
+            withCredentials([string(credentialsId: GIT_CREDENTIALS_ID, variable: 'GIT_TOKEN')]) {
+              sh 'advisor upgrade-plan apply --push --url=$ADVISOR_SERVER --token=$GIT_TOKEN'
+            }  
+          }
+        }  
+      }   
+    }
+  }
+}
