@@ -1,0 +1,19 @@
+FROM jenkins/jenkins:jdk17-preview
+
+
+USER root
+RUN set -x; apt-get update \
+  && apt-get install --no-install-recommends -y \
+    curl \
+    git \
+    tar 
+
+ENV ARTIFACTORY_TOKEN=<TOKEN>
+RUN curl -L -H "Authorization: Bearer $ARTIFACTORY_TOKEN" -o advisor-cli.tar -X GET https://packages.broadcom.com/artifactory/spring-enterprise/com/vmware/tanzu/spring/application-advisor-cli-linux/0.0.7/application-advisor-cli-linux-0.0.7.tar
+RUN tar -xf advisor-cli.tar --strip-components=1 --exclude=./META-INF
+RUN mv advisor /usr/local/bin/
+
+RUN mkdir /usr/local/advisor-data
+COPY settings.xml /usr/local/advisor-data/
+
+USER 1000
