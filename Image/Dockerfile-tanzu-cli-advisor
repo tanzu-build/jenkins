@@ -13,7 +13,7 @@ RUN install /tmp/v1.3.0/tanzu-cli-linux_amd64 /usr/local/bin/tanzu
 RUN tanzu config eula accept
 RUN tanzu plugin install --group vmware-tanzu/app-developer
 
-ENV ARTIFACTORY_TOKEN=<ARTIFACTOTY TOKEN>
+ENV ARTIFACTORY_TOKEN=<TOKEN>
 RUN curl -L -H "Authorization: Bearer $ARTIFACTORY_TOKEN" -o advisor-cli.tar -X GET https://packages.broadcom.com/artifactory/spring-enterprise/com/vmware/tanzu/spring/application-advisor-cli-linux/0.0.7/application-advisor-cli-linux-0.0.7.tar
 RUN tar -xf advisor-cli.tar --strip-components=1 --exclude=./META-INF
 RUN mv advisor /usr/local/bin/

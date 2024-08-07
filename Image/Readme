@@ -1,0 +1,1 @@
+docker build -t marygabry1508/docker-build-advisor:20.10-dind --progress plain  --platform linux/amd64,linux/arm64  .

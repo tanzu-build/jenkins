@@ -1,0 +1,7 @@
+---
+apiVersion: imgpkg.carvel.dev/v1alpha1
+images:
+- annotations:
+    kbld.carvel.dev/id: marygabry1508/java-rest-service@sha256:e4a3c1fe91ee7be2a092ffc63c013dc1e9c39200558e6612c1360004a99964b4
+  image: index.docker.io/marygabry1508/java-rest-service@sha256:e4a3c1fe91ee7be2a092ffc63c013dc1e9c39200558e6612c1360004a99964b4
+kind: ImagesLock
