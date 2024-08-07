@@ -1,6 +1,6 @@
 pipeline {
   agent {
-    kubernetes {
+    kubernetes { // This entire `kubernetes` section should be removed if Jenkins is running on VMs
       yaml '''
         apiVersion: v1
         kind: Pod
@@ -11,7 +11,7 @@ pipeline {
             args: ["-noCertificateCheck"]
             imagePullPolicy: IfNotPresent # Always
           - name: docker
-            image: marygabry1508/docker:dind-tanzu-build
+            image: <YOUR-REGISTRY>/docker:dind-tanzu-build
             imagePullPolicy: IfNotPresent # Always
             securityContext:
               privileged: true
@@ -29,29 +29,49 @@ pipeline {
     }
   }
   parameters {
-    string(name: 'GITREPO', defaultValue: 'https://github.com/tanzu-build/tanzu-build-samples.git')
-    string(name: 'BRANCH', defaultValue: '*/main')
-    string(name: 'DOCKER_CREDENTIALS_ID', defaultValue: 'mgbdocker')
-    string(name: 'GIT_CREDENTIALS_ID', defaultValue: 'mgb-git-tanzu-build')
-    string(name: 'CONFIG_FILE' , defaultValue: './platform-config.yaml')
-    string(name: 'SPACE' , defaultValue: 'jay')    
-    string(name: 'PROJECT' , defaultValue: 'ne-growth')      
-    string(name: 'TANZU_API_TOKEN' , defaultValue: 'Tanzu_Platform_for_K8s_SaaS_-_Internal_1_APItoken') 
+    string(name: 'GITREPO', defaultValue: 'https://github.com/tanzu-build/tanzu-build-samples.git') // Git repo to build
+    string(name: 'BRANCH', defaultValue: '*/main') // Branch of the Git repo to build
+    string(name: 'GIT_CREDENTIALS_ID', defaultValue: 'mgb-git-tanzu-build') // Credentials for the Git repo to build
+    string(name: 'REGISTRY_NAME' , defaultValue: 'registry-name') // Docker Registry for containers artifacts
+    string(name: 'REGISTRY_CREDENTIALS_ID', defaultValue: 'mgbdocker') // Docker Registry Creds for containers artifacts
+    string(name: 'TANZU_API_TOKEN' , defaultValue: 'Tanzu_Platform_for_K8s_SaaS_-_Internal_1_APItoken') // TPk8s API Token
+    string(name: 'PROJECT' , defaultValue: 'ne-growth')  // TPk8s project
+    string(name: 'SPACE' , defaultValue: 'gabry')     // TPk8s Space    
+    string(name: 'BUILD_PLAN_SOURCE' , defaultValue: 'custom-build-plan')  // TPk8s plan
   }
-  environment {
-      TARGET_FILE = '/root/.config/tanzu/build/config.yaml'
+  triggers {
+    GenericTrigger(
+      genericVariables: [
+        [key: 'GITREPO', value: '$.repository.git_http_url'],
+        [key: 'BRANCH', value: '$.ref']
+      ],
+      causeString: 'Triggered on $GITREPO',
+      token: 'gitlab-basic', // Optional security token
+      printContributedVariables: true,
+      printPostContent: true,
+      regexpFilterText: '',
+      regexpFilterExpression: ''
+    )
   }
   stages {
     stage('Cloning Git Application Repo') {
       steps {
         container('docker') {
           script {
-            withCredentials([string(credentialsId: GIT_CREDENTIALS_ID, variable: 'GIT_TOKEN')]) {
-              def repoUrl = params.GITREPO.replace('https://', "https://${GIT_TOKEN}@")
+            def prefix = ""
+            def git_creds=GIT_CREDENTIALS_ID
+            if (env.GITREPO.startsWith('https://gitlab')) { // Webhook from GITLAB
+              env.BRANCH = branch.replaceAll('refs/heads/', '') // GitLab sends branch as refs/heads/branch
+              prefix = env.GITREPO.split('/').last().replace('.git', '') + ":"
+              git_creds=GIT_CREDENTIALS_ID.replace('git-', "gitlab-")
+            }
+            
+            withCredentials([string(credentialsId: git_creds, variable: 'GIT_TOKEN')]) {
+              def gitRepoUrl = params.GITREPO.replace('https://', "https://${prefix}${GIT_TOKEN}@")
               checkout([
                   $class: 'GitSCM',
                   branches: [[name: params.BRANCH]],
-                  userRemoteConfigs: [[url: repoUrl, credentialsId: GIT_CREDENTIALS_ID]]
+                  userRemoteConfigs: [[url: gitRepoUrl, credentialsId: git_creds]]
               ])
             }
           }
@@ -61,8 +81,8 @@ pipeline {
     stage('Login to Docker Registry') {
       steps {
         container('docker') {
-          withCredentials([usernamePassword(credentialsId: DOCKER_CREDENTIALS_ID, usernameVariable: 'DOCKER_USERNAME', passwordVariable: 'DOCKER_PASSWORD')]) {
-              sh "docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD"
+          withCredentials([usernamePassword(credentialsId: REGISTRY_CREDENTIALS_ID, usernameVariable: 'DOCKER_USERNAME', passwordVariable: 'DOCKER_PASSWORD')]) {
+                sh('docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD')
           }
         }
       }
@@ -71,12 +91,14 @@ pipeline {
       steps {
         container('docker') {
           script {
-            // Extract the registry value from config.yaml
-            def REGISTRY_VALUE = sh(script: "grep 'registry:' ${CONFIG_FILE} | awk '{print \$2}'", returnStdout: true).trim()  
-            sh "tanzu build config --build-plan-source-type=file --build-plan-source ${CONFIG_FILE}"
-            withCredentials([string(credentialsId: TANZU_API_TOKEN, variable: 'TANZU_API_TOKEN_API')]) {
-              sh "TANZU_API_TOKEN=$TANZU_API_TOKEN_API tanzu login"
+            withCredentials([string(credentialsId: REGISTRY_NAME, variable: 'REG_NAME')]) {
+              sh("tanzu build config --build-plan-source-type=ucp --containerapp-registry ${REG_NAME}/{name} --build-plan-source ${params.BUILD_PLAN_SOURCE}")
             }
+            withCredentials([string(credentialsId: TANZU_API_TOKEN, variable: 'TANZU_API_TOKEN_API')]) {
+              sh('TANZU_API_TOKEN=$TANZU_API_TOKEN_API tanzu login')
+            }
+            sh("tanzu project use ${params.PROJECT}")
+            sh("tanzu space use ${params.SPACE}")          
           }
         }
       }     
@@ -85,34 +107,9 @@ pipeline {
       steps {
         container('docker') {
           // Build with the cli
-          sh 'tanzu deploy'
+          sh("tanzu deploy -y")
         }
       }
     }
-
-    // stage('Cloning GitOps Repo') {
-    //   steps {
-    //     container('docker') {
-    //       script {
-    //         withCredentials([string(credentialsId: GIT_CREDENTIALS_ID, variable: 'GIT_TOKEN')]) {
-    //           def newGitRepo = params.GITREPO.replace('https://', "https://${GIT_TOKEN}@").replaceAll(/(\.git)$/, '-ops$1')
-    //           checkout([
-    //             $class: 'GitSCM',
-    //             branches: [[name: params.BRANCH]],
-    //             userRemoteConfigs: [[url: newGitRepo, credentialsId: GIT_CREDENTIALS_ID]]
-    //           ])
-    //           sh 'git config --global --add safe.directory /home/jenkins/agent/workspace/testd'
-    //           sh 'git config user.email jenkis@test.com'
-    //           sh 'git config user.name Jenkins'
-    //           sh 'cp -r /tmp/tanzu/. .'
-    //           sh 'git status'
-    //           sh 'git add .'
-    //           sh 'git commit -m "Automated commit by Jenkins pipeline"'
-    //           sh "git push origin ${params.BRANCH}"
-    //         }
-    //       }
-    //     }
-    //   }
-    // }
   }
 }
