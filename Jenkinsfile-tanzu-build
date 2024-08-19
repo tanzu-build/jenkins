@@ -1,0 +1,74 @@
+pipeline {
+  agent any
+  parameters {
+    string(name: 'GITREPO', defaultValue: 'https://github.com/tanzu-build/tanzu-build-samples.git') // Git repo to build
+    string(name: 'BRANCH', defaultValue: '*/main') // Branch of the Git repo to build
+    string(name: 'GIT_CREDENTIALS_ID', defaultValue: 'mgb-git-tanzu-build') // Credentials for the Git repo to build
+    string(name: 'DOCKER_CREDENTIALS_ID', defaultValue: 'mgbdocker') // Docker Registry for containers artifacts
+    string(name: 'CONFIG_FILE' , defaultValue: './platform-config.yaml') // Local plan 
+  }
+  environment {
+      TARGET_FILE = '/root/.config/tanzu/build/config.yaml'
+  }
+  stages {
+    stage('Cloning Git Application Repo') {
+      steps {
+        script {
+          withCredentials([string(credentialsId: GIT_CREDENTIALS_ID, variable: 'GIT_TOKEN')]) {
+            def repoUrl = params.GITREPO.replace('https://', "https://${GIT_TOKEN}@")
+            checkout([
+                $class: 'GitSCM',
+                branches: [[name: params.BRANCH]],
+                userRemoteConfigs: [[url: repoUrl, credentialsId: GIT_CREDENTIALS_ID]]
+            ])
+          }
+        }
+      }
+    }
+    stage('Login to Docker Registry') {
+      steps {
+        withCredentials([usernamePassword(credentialsId: DOCKER_CREDENTIALS_ID, usernameVariable: 'DOCKER_USERNAME', passwordVariable: 'DOCKER_PASSWORD')]) {
+            sh 'docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD'
+        }
+      }
+    }
+    stage('Configure Build Environment') {
+      steps {
+        script {
+          // Extract the registry value from config.yaml
+          def REGISTRY_VALUE = sh(script: "grep 'registry:' ${CONFIG_FILE} | awk '{print \$2}'", returnStdout: true).trim()  
+          sh "tanzu build config --build-plan-source-type=file --build-plan-source ${CONFIG_FILE} --containerapp-registry ${REGISTRY_VALUE}/{name}"
+        }
+      }     
+    }
+    stage('Build') {
+      steps {
+        // Build with the cli
+        sh 'tanzu build --output-dir /tmp/tanzu'
+      }
+    }
+
+    stage('Cloning GitOps Repo') {
+      steps {
+        script {
+          withCredentials([string(credentialsId: GIT_CREDENTIALS_ID, variable: 'GIT_TOKEN')]) {
+            def newGitRepo = params.GITREPO.replace('https://', "https://${GIT_TOKEN}@").replaceAll(/(\.git)$/, '-ops$1')
+            checkout([
+              $class: 'GitSCM',
+              branches: [[name: params.BRANCH]],
+              userRemoteConfigs: [[url: newGitRepo, credentialsId: GIT_CREDENTIALS_ID]]
+            ])
+            sh 'git config --global --add safe.directory /home/jenkins/agent/workspace/testd'
+            sh 'git config user.email jenkis@test.com'
+            sh 'git config user.name Jenkins'
+            sh 'cp -r /tmp/tanzu/. .'
+            sh 'git status'
+            sh 'git add .'
+            sh 'git commit -m "Automated commit by Jenkins pipeline"'
+            sh "git push origin ${params.BRANCH}"
+          }
+        }
+      }
+    }
+  }
+}
